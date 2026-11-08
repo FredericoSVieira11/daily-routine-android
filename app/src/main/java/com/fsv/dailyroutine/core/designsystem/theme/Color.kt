@@ -1,4 +1,4 @@
-package com.fsv.dailyroutine.ui.theme
+package com.fsv.dailyroutine.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
