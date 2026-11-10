@@ -5,7 +5,7 @@ A small Android habit tracker built as a weekly practice project to exercise mod
 ## Status
 
 - [x] Project setup, Hilt, theme, type-safe navigation
-- [ ] Room database, repository and use cases
+- [x] Room database, repository and use cases
 - [ ] Habit list and create/edit screens
 - [ ] Stats (streaks, weekly completion)
 - [ ] DataStore preferences and WorkManager reminders
@@ -43,6 +43,7 @@ The dependency rule points towards `domain`, which has no Android dependencies, 
 - **KSP instead of kapt:** faster and the current standard for Hilt and Room.
 - **`android.disallowKotlinSourceSets=false`:** with AGP 9's built-in Kotlin, the KSP plugin still registers generated sources through the legacy `kotlin.sourceSets` API, which AGP blocks by default. This flag is a temporary workaround and can be removed once KSP no longer needs it.
 - **Type-safe navigation:** routes are `@Serializable` objects/classes instead of string routes.
+- **Explicit `kotlinx-coroutines-android` dependency:** instrumented tests run the app and test code in separate APKs, so a newer `coroutines-test` can crash with `NoSuchMethodError` against an older transitive `coroutines-core`. Declaring the app's coroutines version explicitly keeps both aligned.
 
 ## Running the project
 
