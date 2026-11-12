@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.fsv.dailyroutine.feature.habits.presentation.CreateHabitScreen
+import com.fsv.dailyroutine.feature.habits.presentation.HabitListRoute
 import com.fsv.dailyroutine.feature.habits.presentation.HabitListScreen
 
 @Composable
@@ -20,7 +21,7 @@ fun DailyRoutineNavHost(
         modifier = modifier,
     ) {
         composable<HabitList> {
-            HabitListScreen(onAddClick = { navController.navigate(CreateHabit) })
+            HabitListRoute(onAddClick = { navController.navigate(CreateHabit) })
         }
         composable<CreateHabit> {
             CreateHabitScreen(onBack = { navController.popBackStack() })
