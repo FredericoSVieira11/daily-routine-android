@@ -44,8 +44,10 @@ The dependency rule points towards `domain`, which has no Android dependencies, 
 - **`android.disallowKotlinSourceSets=false`:** with AGP 9's built-in Kotlin, the KSP plugin still registers generated sources through the legacy `kotlin.sourceSets` API, which AGP blocks by default. This flag is a temporary workaround and can be removed once KSP no longer needs it.
 - **Type-safe navigation:** routes are `@Serializable` objects/classes instead of string routes.
 - **Explicit `kotlinx-coroutines-android` dependency:** instrumented tests run the app and test code in separate APKs, so a newer `coroutines-test` can crash with `NoSuchMethodError` against an older transitive `coroutines-core`. Declaring the app's coroutines version explicitly keeps both aligned.
-- - **Single source of truth:** the UI never keeps its own copy of completion state. Toggling writes to Room, and the list updates because the Room `Flow` re-emits.
+- **Single source of truth:** the UI never keeps its own copy of completion state. Toggling writes to Room, and the list updates because the Room `Flow` re-emits.
 - **State vs. route composables:** `HabitListRoute` talks to the ViewModel, while `HabitListScreen` only receives state and callbacks, which keeps it previewable and testable.
+- **Validation in the domain layer:** `CreateHabitUseCase` returns a sealed result, so the ViewModel only maps outcomes to UI state and the compiler forces every case to be handled.
+- **One-shot events via `Channel`:** "saved" is delivered exactly once and is not replayed after rotation. The alternative is modelling it as consumable state.
 
 ## Running the project
 
