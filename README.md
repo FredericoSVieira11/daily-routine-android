@@ -7,9 +7,10 @@ A small Android habit tracker built as a weekly practice project to exercise mod
 - [x] Project setup, Hilt, theme, type-safe navigation
 - [x] Room database, repository and use cases
 - [x] Habit list and create/edit screens
+- [x] Unit tests (use cases, ViewModels) and instrumented DAO tests
 - [ ] Stats (streaks, weekly completion)
 - [ ] DataStore preferences and WorkManager reminders
-- [ ] Unit and UI tests
+- [ ] Compose UI tests
 
 ## Tech stack
 
@@ -19,6 +20,7 @@ A small Android habit tracker built as a weekly practice project to exercise mod
 - Room (local persistence)
 - Coroutines and Flow / StateFlow
 - Android Gradle Plugin 9 (built-in Kotlin), version catalog
+- Testing: JUnit, Turbine, kotlinx-coroutines-test, in-memory fakes, and an in-memory Room database for DAO tests
 
 ## Architecture
 
@@ -46,8 +48,11 @@ The dependency rule points towards `domain`, which has no Android dependencies, 
 - **Explicit `kotlinx-coroutines-android` dependency:** instrumented tests run the app and test code in separate APKs, so a newer `coroutines-test` can crash with `NoSuchMethodError` against an older transitive `coroutines-core`. Declaring the app's coroutines version explicitly keeps both aligned.
 - **Single source of truth:** the UI never keeps its own copy of completion state. Toggling writes to Room, and the list updates because the Room `Flow` re-emits.
 - **State vs. route composables:** `HabitListRoute` talks to the ViewModel, while `HabitListScreen` only receives state and callbacks, which keeps it previewable and testable.
-- **Validation in the domain layer:** `CreateHabitUseCase` returns a sealed result, so the ViewModel only maps outcomes to UI state and the compiler forces every case to be handled.
+- **Validation in the domain layer:** `CreateHabitUseCase` and `UpdateHabitUseCase` share the same input rules and return sealed results, so the ViewModel only maps outcomes to UI state and the compiler forces every case to be handled.
 - **One-shot events via `Channel`:** "saved" is delivered exactly once and is not replayed after rotation. The alternative is modelling it as consumable state.
+- **One form for create and edit:** the `HabitForm` route carries an optional `habitId`, and the ViewModel switches mode from `SavedStateHandle`. Updates only touch name, description and reminder, so completion history is never lost.
+- **Row tap vs. checkbox:** tapping a row opens the habit and the checkbox toggles completion. A `toggleable` row merges child semantics, which would hide any nested action from TalkBack.
+- **Fakes over mocks, injected `Clock`:** repositories are tested with in-memory fakes and time comes from an injected `Clock`, so tests are deterministic and survive refactors.
 
 ## Running the project
 
