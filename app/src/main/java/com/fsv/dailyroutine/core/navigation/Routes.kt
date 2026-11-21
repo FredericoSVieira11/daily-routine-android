@@ -6,4 +6,4 @@ import kotlinx.serialization.Serializable
 data object HabitList
 
 @Serializable
-data object CreateHabit
+data class HabitForm(val habitId: Long? = null)

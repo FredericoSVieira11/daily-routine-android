@@ -1,6 +1,7 @@
 package com.fsv.dailyroutine.feature.habits.presentation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,10 +52,10 @@ import java.time.format.DateTimeFormatter
 private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 @Composable
-fun CreateHabitRoute(
+fun HabitFormRoute(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CreateHabitViewModel = hiltViewModel(),
+    viewModel: HabitFormViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
@@ -61,12 +63,12 @@ fun CreateHabitRoute(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                CreateHabitEvent.Saved -> currentOnNavigateBack()
+                HabitFormEvent.Saved, HabitFormEvent.HabitNotFound -> currentOnNavigateBack()
             }
         }
     }
 
-    CreateHabitScreen(
+    HabitFormScreen(
         state = state,
         onNameChange = viewModel::onNameChange,
         onDescriptionChange = viewModel::onDescriptionChange,
@@ -79,8 +81,8 @@ fun CreateHabitRoute(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateHabitScreen(
-    state: CreateHabitUiState,
+fun HabitFormScreen(
+    state: HabitFormUiState,
     onNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onReminderChange: (LocalTime?) -> Unit,
@@ -94,7 +96,7 @@ fun CreateHabitScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("New habit") },
+                title = { Text(if (state.isEditing) "Edit habit" else "New habit") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -103,57 +105,68 @@ fun CreateHabitScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            OutlinedTextField(
-                value = state.name,
-                onValueChange = onNameChange,
-                label = { Text("Name") },
-                singleLine = true,
-                isError = state.nameError != null,
-                supportingText = state.nameError?.let { error -> { Text(error.message()) } },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    imeAction = ImeAction.Next,
-                ),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = state.description,
-                onValueChange = onDescriptionChange,
-                label = { Text("Description (optional)") },
-                minLines = 2,
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedButton(onClick = { showTimePicker = true }) {
-                    Text(
-                        state.reminderTime
-                            ?.let { "Reminder at ${it.format(timeFormatter)}" }
-                            ?: "Add reminder",
-                    )
-                }
-                if (state.reminderTime != null) {
-                    IconButton(onClick = { onReminderChange(null) }) {
-                        Icon(Icons.Default.Close, contentDescription = "Remove reminder")
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                OutlinedTextField(
+                    value = state.name,
+                    onValueChange = onNameChange,
+                    label = { Text("Name") },
+                    singleLine = true,
+                    isError = state.nameError != null,
+                    supportingText = state.nameError?.let { error -> { Text(error.message()) } },
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Next,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = state.description,
+                    onValueChange = onDescriptionChange,
+                    label = { Text("Description (optional)") },
+                    minLines = 2,
+                    maxLines = 4,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(onClick = { showTimePicker = true }) {
+                        Text(
+                            state.reminderTime
+                                ?.let { "Reminder at ${it.format(timeFormatter)}" }
+                                ?: "Add reminder",
+                        )
+                    }
+                    if (state.reminderTime != null) {
+                        IconButton(onClick = { onReminderChange(null) }) {
+                            Icon(Icons.Default.Close, contentDescription = "Remove reminder")
+                        }
                     }
                 }
-            }
-            Button(
-                onClick = onSaveClick,
-                enabled = !state.isSaving,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Save")
+                Button(
+                    onClick = onSaveClick,
+                    enabled = !state.isSaving,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Save")
+                }
             }
         }
     }
@@ -201,10 +214,10 @@ private fun HabitNameError.message(): String = when (this) {
 
 @Preview(showBackground = true)
 @Composable
-private fun CreateHabitScreenPreview() {
+private fun HabitFormScreenPreview() {
     DailyRoutineTheme {
-        CreateHabitScreen(
-            state = CreateHabitUiState(name = "", reminderTime = LocalTime.of(8, 30), nameError = HabitNameError.Blank),
+        HabitFormScreen(
+            state = HabitFormUiState(name = "", reminderTime = LocalTime.of(8, 30), nameError = HabitNameError.Blank),
             onNameChange = {},
             onDescriptionChange = {},
             onReminderChange = {},

@@ -18,4 +18,13 @@ interface HabitRepository {
     suspend fun archiveHabit(id: Long)
 
     suspend fun setCompleted(habitId: Long, date: LocalDate, completed: Boolean)
+
+    suspend fun getHabit(id: Long): Habit?
+
+    suspend fun updateHabit(
+        id: Long,
+        name: String,
+        description: String?,
+        reminderTime: LocalTime?,
+    ): Boolean
 }

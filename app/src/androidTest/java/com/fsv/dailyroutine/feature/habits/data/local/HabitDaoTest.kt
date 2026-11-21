@@ -12,11 +12,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.LocalDate
+import java.time.LocalTime
 
 @RunWith(AndroidJUnit4::class)
 class HabitDaoTest {
@@ -78,5 +80,29 @@ class HabitDaoTest {
 
         val habit = habitDao.observeActiveWithCompletions().first().single()
         assertTrue(habit.completions.isEmpty())
+    }
+
+    @Test
+    fun updatePersistsChangedFieldsIncludingReminder() = runTest {
+        val id = habitDao.insert(newHabit())
+        val stored = habitDao.getById(id)!!
+
+        habitDao.update(stored.copy(name = "Run 5 km", reminderTime = LocalTime.of(7, 30)))
+
+        val updated = habitDao.getById(id)!!
+        assertEquals("Run 5 km", updated.name)
+        assertEquals(LocalTime.of(7, 30), updated.reminderTime)
+    }
+
+    @Test
+    fun getWithCompletionsByIdReturnsTheHabitAndItsCompletions() = runTest {
+        val id = habitDao.insert(newHabit())
+        completionDao.insert(HabitCompletionEntity(habitId = id, date = date))
+
+        val result = habitDao.getWithCompletionsById(id)
+
+        assertEquals(id, result?.habit?.id)
+        assertEquals(listOf(date), result?.completions?.map { it.date })
+        assertNull(habitDao.getWithCompletionsById(999))
     }
 }

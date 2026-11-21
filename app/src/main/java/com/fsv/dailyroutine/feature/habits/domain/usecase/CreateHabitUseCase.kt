@@ -22,13 +22,11 @@ class CreateHabitUseCase @Inject constructor(
         description: String?,
         reminderTime: LocalTime?,
     ): CreateHabitResult {
-        val trimmedName = name.trim()
-        if (trimmedName.isEmpty()) return CreateHabitResult.InvalidName(HabitNameError.Blank)
-        if (trimmedName.length > MAX_NAME_LENGTH) return CreateHabitResult.InvalidName(HabitNameError.TooLong)
+        validateHabitName(name)?.let { return CreateHabitResult.InvalidName(it) }
 
         val id = repository.createHabit(
-            name = trimmedName,
-            description = description?.trim()?.takeIf { it.isNotEmpty() },
+            name = name.trim(),
+            description = description.normalizedDescription(),
             createdAt = LocalDate.now(clock),
             reminderTime = reminderTime,
         )

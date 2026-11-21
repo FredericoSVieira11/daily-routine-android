@@ -27,4 +27,8 @@ interface HabitDao {
     @Transaction
     @Query("SELECT * FROM habits WHERE archived = 0 ORDER BY created_at DESC, id DESC")
     fun observeActiveWithCompletions(): Flow<List<HabitWithCompletions>>
+
+    @Transaction
+    @Query("SELECT * FROM habits WHERE id = :id")
+    suspend fun getWithCompletionsById(id: Long): HabitWithCompletions?
 }

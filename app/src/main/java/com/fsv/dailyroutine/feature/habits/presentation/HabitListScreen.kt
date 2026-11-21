@@ -1,5 +1,6 @@
 package com.fsv.dailyroutine.feature.habits.presentation
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Checkbox
@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,13 +35,16 @@ import com.fsv.dailyroutine.core.designsystem.theme.DailyRoutineTheme
 @Composable
 fun HabitListRoute(
     onAddClick: () -> Unit,
+    onHabitClick: (habitId: Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HabitListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
     HabitListScreen(
         state = state,
         onAddClick = onAddClick,
+        onHabitClick = onHabitClick,
         onToggle = viewModel::onToggle,
         modifier = modifier,
     )
@@ -52,6 +54,7 @@ fun HabitListRoute(
 fun HabitListScreen(
     state: HabitListUiState,
     onAddClick: () -> Unit,
+    onHabitClick: (habitId: Long) -> Unit,
     onToggle: (habitId: Long, completed: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -66,7 +69,8 @@ fun HabitListScreen(
         when (state) {
             HabitListUiState.Loading -> LoadingContent(Modifier.padding(innerPadding))
             HabitListUiState.Empty -> EmptyContent(Modifier.padding(innerPadding))
-            is HabitListUiState.Content -> HabitList(state, onToggle, Modifier.padding(innerPadding))
+            is HabitListUiState.Content ->
+                HabitList(state, onHabitClick = onHabitClick, onToggle = onToggle, modifier = Modifier.padding(innerPadding))
         }
     }
 }
@@ -102,11 +106,12 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
 private fun HabitList(
     state: HabitListUiState.Content,
     onToggle: (Long, Boolean) -> Unit,
+    onHabitClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 88.dp), // espaço para o FAB não tapar o último item
+        contentPadding = PaddingValues(bottom = 88.dp),
     ) {
         item(key = "header") {
             Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
@@ -119,7 +124,7 @@ private fun HabitList(
             }
         }
         items(items = state.habits, key = { it.id }) { habit ->
-            HabitRow(habit = habit, onToggle = onToggle)
+            HabitRow(habit = habit, onClick = onHabitClick, onToggle = onToggle)
         }
     }
 }
@@ -127,18 +132,20 @@ private fun HabitList(
 @Composable
 private fun HabitRow(
     habit: HabitItemUi,
+    onClick: (Long) -> Unit,
     onToggle: (Long, Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ListItem(
-        modifier = modifier.toggleable(
-            value = habit.completedToday,
-            role = Role.Checkbox,
-            onValueChange = { onToggle(habit.id, it) },
-        ),
+        modifier = modifier.clickable { onClick(habit.id) },
         headlineContent = { Text(habit.name) },
         supportingContent = habit.description?.let { description -> { Text(description) } },
-        trailingContent = { Checkbox(checked = habit.completedToday, onCheckedChange = null) },
+        trailingContent = {
+            Checkbox(
+                checked = habit.completedToday,
+                onCheckedChange = { onToggle(habit.id, it) },
+            )
+        },
     )
 }
 
@@ -156,6 +163,7 @@ private fun HabitListContentPreview() {
             ),
             onAddClick = {},
             onToggle = { _, _ -> },
+            onHabitClick = {}
         )
     }
 }
@@ -164,7 +172,7 @@ private fun HabitListContentPreview() {
 @Composable
 private fun HabitListEmptyPreview() {
     DailyRoutineTheme {
-        HabitListScreen(state = HabitListUiState.Empty, onAddClick = {}, onToggle = { _, _ -> })
+        HabitListScreen(state = HabitListUiState.Empty, onAddClick = {}, onToggle = { _, _ -> }, onHabitClick = {})
     }
 }
 
@@ -172,6 +180,6 @@ private fun HabitListEmptyPreview() {
 @Composable
 private fun HabitListLoadingPreview() {
     DailyRoutineTheme {
-        HabitListScreen(state = HabitListUiState.Loading, onAddClick = {}, onToggle = { _, _ -> })
+        HabitListScreen(state = HabitListUiState.Loading, onAddClick = {}, onToggle = { _, _ -> }, onHabitClick = {})
     }
 }

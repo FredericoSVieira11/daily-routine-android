@@ -45,4 +45,18 @@ class HabitRepositoryImpl @Inject constructor(
             completionDao.delete(habitId, date)
         }
     }
+
+    override suspend fun getHabit(id: Long): Habit? =
+        habitDao.getWithCompletionsById(id)?.toDomain()
+
+    override suspend fun updateHabit(
+        id: Long,
+        name: String,
+        description: String?,
+        reminderTime: LocalTime?,
+    ): Boolean {
+        val current = habitDao.getById(id) ?: return false
+        habitDao.update(current.copy(name = name, description = description, reminderTime = reminderTime))
+        return true
+    }
 }

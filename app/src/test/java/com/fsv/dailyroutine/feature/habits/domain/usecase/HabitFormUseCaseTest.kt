@@ -12,7 +12,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-class CreateHabitUseCaseTest {
+class HabitFormUseCaseTest {
 
     private val clock = Clock.fixed(Instant.parse("2026-11-10T10:00:00Z"), ZoneOffset.UTC)
     private val repository = FakeHabitRepository()

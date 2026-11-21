@@ -41,4 +41,22 @@ class FakeHabitRepository : HabitRepository {
             }
         }
     }
+
+    override suspend fun getHabit(id: Long): Habit? = habits.value.firstOrNull { it.id == id }
+
+    override suspend fun updateHabit(
+        id: Long,
+        name: String,
+        description: String?,
+        reminderTime: LocalTime?,
+    ): Boolean {
+        if (habits.value.none { it.id == id }) return false
+        habits.update { list ->
+            list.map { habit ->
+                if (habit.id == id) habit.copy(name = name, description = description, reminderTime = reminderTime)
+                else habit
+            }
+        }
+        return true
+    }
 }
